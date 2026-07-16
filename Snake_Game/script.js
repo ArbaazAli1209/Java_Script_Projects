@@ -220,10 +220,21 @@ function changeDirection(newDirection){
     }
 }
 
-upBtn.addEventListener("click", () => changeDirection("up"));
+function bindControl(button, direction){
 
-downBtn.addEventListener("click", () => changeDirection("down"));
+    button.addEventListener("touchstart", function(e){
+        e.preventDefault();
+        changeDirection(direction);
+    });
 
-leftBtn.addEventListener("click", () => changeDirection("left"));
+    button.addEventListener("click", function(e){
+        e.preventDefault();
+        changeDirection(direction);
+    });
 
-rightBtn.addEventListener("click", () => changeDirection("right"));
+}
+
+bindControl(upBtn,"up");
+bindControl(downBtn,"down");
+bindControl(leftBtn,"left");
+bindControl(rightBtn,"right");
