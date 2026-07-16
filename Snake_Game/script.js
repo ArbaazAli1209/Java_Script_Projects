@@ -36,6 +36,16 @@ highScoreElement.innerText = highScore;
 const cols = Math.floor(board.clientWidth / blockWidth);
 const rows = Math.floor(board.clientHeight / blockHeight);
 
+// Force the grid to exactly `cols` x `rows` tracks instead of leaving it to
+// CSS `auto-fill`, which independently computes its own column/row count
+// from pixel measurements and can round differently than the JS math above.
+// When those two disagreed, block (row, col) in JS didn't land in the same
+// cell the browser actually placed it in — which is what caused the snake
+// to visually drift/step diagonally as it moved. Locking both to the same
+// number guarantees they always agree.
+board.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+board.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+
 let intervalId = null;
 let timeIntervalId = null;
 
