@@ -9,23 +9,8 @@ const highScoreElement = document.querySelector("#high-score");
 const scoreElement = document.querySelector("#score");
 const timeElement = document.querySelector("#time");
 
-// Measure the actual rendered block size instead of assuming 50px.
-// Mobile screens use a smaller grid cell (see the @media rule in style.css),
-// so the column/row count must be derived from the real size, not a constant.
-function getBlockSize() {
-    const probe = document.createElement("div");
-    probe.classList.add("block");
-    probe.style.visibility = "hidden";
-    board.appendChild(probe);
-    const rect = probe.getBoundingClientRect();
-    board.removeChild(probe);
-    return { width: rect.width || 50, height: rect.height || 50 };
-}
-
-const { width: blockWidth, height: blockHeight } = getBlockSize();
-
-// Game tick speed in ms. Higher = slower snake. Was 300ms (too fast per feedback).
-const GAME_SPEED_MS = 450;
+const blockHeight = 50;
+const blockWidth = 50;
 
 let highScore = localStorage.getItem("highScore") || 0;
 let score = 0;
@@ -35,16 +20,6 @@ highScoreElement.innerText = highScore;
 
 const cols = Math.floor(board.clientWidth / blockWidth);
 const rows = Math.floor(board.clientHeight / blockHeight);
-
-// Force the grid to exactly `cols` x `rows` tracks instead of leaving it to
-// CSS `auto-fill`, which independently computes its own column/row count
-// from pixel measurements and can round differently than the JS math above.
-// When those two disagreed, block (row, col) in JS didn't land in the same
-// cell the browser actually placed it in — which is what caused the snake
-// to visually drift/step diagonally as it moved. Locking both to the same
-// number guarantees they always agree.
-board.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-board.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
 
 let intervalId = null;
 let timeIntervalId = null;
@@ -58,24 +33,6 @@ let snake = [
     } ];
 
 let direction = 'down';
-let nextDirection = 'down'; // queued direction, committed to `direction` once per tick in render()
-
-// Validates and queues a direction change. Always checks against the last
-// COMMITTED direction (not `nextDirection`), so pressing two keys within the
-// same tick can't sneak a reversal past the "no doubling back" rule — that
-// race condition was what caused the snake to appear to jump diagonally
-// or reverse into itself.
-function requestDirection(newDirection) {
-    if (newDirection === "up" && direction !== "down") {
-        nextDirection = "up";
-    } else if (newDirection === "down" && direction !== "up") {
-        nextDirection = "down";
-    } else if (newDirection === "left" && direction !== "right") {
-        nextDirection = "left";
-    } else if (newDirection === "right" && direction !== "left") {
-        nextDirection = "right";
-    }
-}
 
 for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
@@ -89,9 +46,6 @@ for (let row = 0; row < rows; row++) {
 function render() {
 
     let head = null;
-
-    // Commit at most one direction change per tick.
-    direction = nextDirection;
 
     blocks[` ${food.x},${food.y} `].classList.add("food");
 
@@ -187,7 +141,7 @@ startButton.addEventListener("click", () => {
 
     intervalId = setInterval(() => {
         render();
-    }, GAME_SPEED_MS);
+    }, 300);
 
     timeIntervalId = setInterval(updateTime, 1000);
 });
@@ -210,7 +164,6 @@ function restartGame() {
 
     modal.style.display = "none";
     direction = 'down';
-    nextDirection = 'down';
     snake = [ {x: 1, y: 3} ];
     do {
             food = {
@@ -223,74 +176,18 @@ function restartGame() {
     clearInterval(intervalId);
     clearInterval(timeIntervalId);
 
-    intervalId = setInterval(render, GAME_SPEED_MS);
+    intervalId = setInterval(render, 300);
     timeIntervalId = setInterval(updateTime, 1000);
 }
 
 window.addEventListener("keydown", (event) => {
-    const arrowKeys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
-    if (!arrowKeys.includes(event.key)) {
-        return;
-    }
-
-    // Stop the page from scrolling when steering with arrow keys.
-    event.preventDefault();
-
-    if (event.key === "ArrowUp") {
-        requestDirection("up");
-    } else if (event.key === "ArrowDown") {
-        requestDirection("down");
-    } else if (event.key === "ArrowLeft") {
-        requestDirection("left");
-    } else if (event.key === "ArrowRight") {
-        requestDirection("right");
+    if (event.key == "ArrowUp" && direction !== "down") {
+        direction = "up";
+    } else if (event.key == "ArrowDown" && direction !== "up") {
+        direction = "down";
+    } else if (event.key == "ArrowLeft" && direction !== "right") {
+        direction = "left";
+    } else if (event.key == "ArrowRight" && direction !== "left") {
+        direction = "right";
     }
 })
-
-// --- Mobile support ---
-// Touch input (D-pad + swipe) shares the same requestDirection() queue used
-// by the keyboard handler above, so both input methods are race-free.
-
-// On-screen D-pad buttons (shown on touch devices / small screens via CSS)
-document.querySelectorAll(".touch-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-        requestDirection(btn.dataset.dir);
-    });
-    // touchstart fires faster than click and avoids the ~300ms tap delay
-    btn.addEventListener("touchstart", (event) => {
-        event.preventDefault();
-        requestDirection(btn.dataset.dir);
-    }, { passive: false });
-});
-
-// Swipe gestures directly on the game board
-let touchStartX = 0;
-let touchStartY = 0;
-const swipeThreshold = 20; // minimum px movement to register as a swipe
-
-board.addEventListener("touchstart", (event) => {
-    const touch = event.touches[0];
-    touchStartX = touch.clientX;
-    touchStartY = touch.clientY;
-}, { passive: true });
-
-board.addEventListener("touchmove", (event) => {
-    // Stop the page from scrolling while swiping to steer the snake
-    event.preventDefault();
-}, { passive: false });
-
-board.addEventListener("touchend", (event) => {
-    const touch = event.changedTouches[0];
-    const deltaX = touch.clientX - touchStartX;
-    const deltaY = touch.clientY - touchStartY;
-
-    if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < swipeThreshold) {
-        return; // too small to count as a swipe
-    }
-
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        requestDirection(deltaX > 0 ? "right" : "left");
-    } else {
-        requestDirection(deltaY > 0 ? "down" : "up");
-    }
-});
