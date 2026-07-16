@@ -9,8 +9,20 @@ const highScoreElement = document.querySelector("#high-score");
 const scoreElement = document.querySelector("#score");
 const timeElement = document.querySelector("#time");
 
-const blockHeight = 50;
-const blockWidth = 50;
+// Measure the actual rendered block size instead of assuming 50px.
+// Mobile screens use a smaller grid cell (see the @media rule in style.css),
+// so the column/row count must be derived from the real size, not a constant.
+function getBlockSize() {
+    const probe = document.createElement("div");
+    probe.classList.add("block");
+    probe.style.visibility = "hidden";
+    board.appendChild(probe);
+    const rect = probe.getBoundingClientRect();
+    board.removeChild(probe);
+    return { width: rect.width || 50, height: rect.height || 50 };
+}
+
+const { width: blockWidth, height: blockHeight } = getBlockSize();
 
 let highScore = localStorage.getItem("highScore") || 0;
 let score = 0;
@@ -191,3 +203,63 @@ window.addEventListener("keydown", (event) => {
         direction = "right";
     }
 })
+
+// --- Mobile support ---
+
+// Shared handler used by both the on-screen D-pad and swipe gestures,
+// mirroring the same "no reversing into yourself" rule as the keyboard handler.
+function setDirection(newDirection) {
+    if (newDirection === "up" && direction !== "down") {
+        direction = "up";
+    } else if (newDirection === "down" && direction !== "up") {
+        direction = "down";
+    } else if (newDirection === "left" && direction !== "right") {
+        direction = "left";
+    } else if (newDirection === "right" && direction !== "left") {
+        direction = "right";
+    }
+}
+
+// On-screen D-pad buttons (shown on touch devices / small screens via CSS)
+document.querySelectorAll(".touch-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+        setDirection(btn.dataset.dir);
+    });
+    // touchstart fires faster than click and avoids the ~300ms tap delay
+    btn.addEventListener("touchstart", (event) => {
+        event.preventDefault();
+        setDirection(btn.dataset.dir);
+    }, { passive: false });
+});
+
+// Swipe gestures directly on the game board
+let touchStartX = 0;
+let touchStartY = 0;
+const swipeThreshold = 20; // minimum px movement to register as a swipe
+
+board.addEventListener("touchstart", (event) => {
+    const touch = event.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+}, { passive: true });
+
+board.addEventListener("touchmove", (event) => {
+    // Stop the page from scrolling while swiping to steer the snake
+    event.preventDefault();
+}, { passive: false });
+
+board.addEventListener("touchend", (event) => {
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - touchStartX;
+    const deltaY = touch.clientY - touchStartY;
+
+    if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < swipeThreshold) {
+        return; // too small to count as a swipe
+    }
+
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        setDirection(deltaX > 0 ? "right" : "left");
+    } else {
+        setDirection(deltaY > 0 ? "down" : "up");
+    }
+});

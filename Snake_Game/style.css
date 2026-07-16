@@ -84,6 +84,9 @@ section .infos{
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
     grid-template-rows: repeat(auto-fill, minmax(50px, 1fr));
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .block{
@@ -123,4 +126,77 @@ section .infos{
 
 .modal .game-over {
     display: none;
+}
+
+/* Touch controls: hidden on desktop, shown on touch/small screens below */
+.touch-controls{
+    display: none;
+    grid-template-columns: repeat(3, 56px);
+    grid-template-rows: repeat(2, 56px);
+    justify-content: center;
+    gap: var(--space-sm);
+    align-self: center;
+}
+
+.touch-btn{
+    grid-row: auto;
+    background-color: rgba(218, 241, 193, 0.1);
+    border: 1px solid var(--border-primary-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary-color);
+    font-size: 1.4rem;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.touch-btn:active{
+    background-color: rgba(218, 241, 193, 0.3);
+}
+
+.touch-up{ grid-column: 2; grid-row: 1; }
+.touch-left{ grid-column: 1; grid-row: 2; }
+.touch-down{ grid-column: 2; grid-row: 2; }
+.touch-right{ grid-column: 3; grid-row: 2; }
+
+/* Show D-pad on touch-capable devices and narrow/mobile viewports */
+@media (pointer: coarse), (max-width: 700px){
+    .touch-controls{
+        display: grid;
+    }
+}
+
+/* Tighten spacing and font sizes on small screens */
+@media (max-width: 700px){
+    section{
+        padding: var(--space-md);
+        gap: var(--space-md);
+    }
+
+    section .infos{
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+    }
+
+    .info{
+        padding: var(--space-xs) var(--space-sm);
+        font-size: 0.85rem;
+    }
+
+    .info h3{
+        font-size: 0.9rem;
+    }
+
+    .board{
+        grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+        grid-template-rows: repeat(auto-fill, minmax(28px, 1fr));
+    }
+
+    .modal .start-game h3,
+    .modal .game-over h3{
+        font-size: 1.1rem;
+        text-align: center;
+        padding: 0 var(--space-md);
+    }
 }
