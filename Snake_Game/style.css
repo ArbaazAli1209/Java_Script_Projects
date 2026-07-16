@@ -175,8 +175,8 @@ section .infos{
 @media (max-width:768px){
 
     section{
+        height:calc(100dvh - 170px);
         padding:var(--space-md);
-        padding-bottom:170px;
         gap:var(--space-md);
     }
 
@@ -187,14 +187,11 @@ section .infos{
 
     .board{
         width:100%;
-        aspect-ratio:1;
-        max-height:65vh;
-        flex-grow:0;
-    }
+    flex:1;
+    min-height:0;
 
-    .board{
-        grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
-        grid-template-rows: repeat(auto-fill, minmax(28px, 1fr));
+    grid-template-columns:repeat(auto-fill,minmax(28px,1fr));
+    grid-template-rows:repeat(auto-fill,minmax(28px,1fr));
     }
 
     .mobile-controls{

@@ -14,8 +14,10 @@ const highScoreElement = document.querySelector("#high-score");
 const scoreElement = document.querySelector("#score");
 const timeElement = document.querySelector("#time");
 
-const blockHeight = 50;
-const blockWidth = 50;
+const blockSize = window.innerWidth <= 768 ? 28 : 50;
+
+const blockHeight = blockSize;
+const blockWidth = blockSize;
 
 let highScore = localStorage.getItem("highScore") || 0;
 let score = 0;
@@ -220,18 +222,14 @@ function changeDirection(newDirection){
     }
 }
 
-function bindControl(button, direction){
+function bindControl(button, newDirection){
 
-    button.addEventListener("touchstart", function(e){
+    const move = (e)=>{
         e.preventDefault();
-        changeDirection(direction);
-    });
+        changeDirection(newDirection);
+    };
 
-    button.addEventListener("click", function(e){
-        e.preventDefault();
-        changeDirection(direction);
-    });
-
+    button.addEventListener("pointerdown", move);
 }
 
 bindControl(upBtn,"up");
