@@ -159,13 +159,24 @@ section .infos{
 @media (max-width:768px){
 
     section{
-        padding:20px;
+        padding: var(--space-md);
+        gap: var(--space-md);
+    }
+
+    section .infos{
+        flex-wrap: wrap;
+        gap: var(--space-sm);
     }
 
     .board{
         aspect-ratio:1;
         width:100%;
         flex-grow:0;
+    }
+
+    .board{
+        grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+        grid-template-rows: repeat(auto-fill, minmax(28px, 1fr));
     }
 
     .mobile-controls{
