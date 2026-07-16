@@ -24,6 +24,9 @@ function getBlockSize() {
 
 const { width: blockWidth, height: blockHeight } = getBlockSize();
 
+// Game tick speed in ms. Higher = slower snake. Was 300ms (too fast per feedback).
+const GAME_SPEED_MS = 450;
+
 let highScore = localStorage.getItem("highScore") || 0;
 let score = 0;
 let time = `00:00`;
@@ -45,6 +48,24 @@ let snake = [
     } ];
 
 let direction = 'down';
+let nextDirection = 'down'; // queued direction, committed to `direction` once per tick in render()
+
+// Validates and queues a direction change. Always checks against the last
+// COMMITTED direction (not `nextDirection`), so pressing two keys within the
+// same tick can't sneak a reversal past the "no doubling back" rule — that
+// race condition was what caused the snake to appear to jump diagonally
+// or reverse into itself.
+function requestDirection(newDirection) {
+    if (newDirection === "up" && direction !== "down") {
+        nextDirection = "up";
+    } else if (newDirection === "down" && direction !== "up") {
+        nextDirection = "down";
+    } else if (newDirection === "left" && direction !== "right") {
+        nextDirection = "left";
+    } else if (newDirection === "right" && direction !== "left") {
+        nextDirection = "right";
+    }
+}
 
 for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
@@ -58,6 +79,9 @@ for (let row = 0; row < rows; row++) {
 function render() {
 
     let head = null;
+
+    // Commit at most one direction change per tick.
+    direction = nextDirection;
 
     blocks[` ${food.x},${food.y} `].classList.add("food");
 
@@ -153,7 +177,7 @@ startButton.addEventListener("click", () => {
 
     intervalId = setInterval(() => {
         render();
-    }, 300);
+    }, GAME_SPEED_MS);
 
     timeIntervalId = setInterval(updateTime, 1000);
 });
@@ -176,6 +200,7 @@ function restartGame() {
 
     modal.style.display = "none";
     direction = 'down';
+    nextDirection = 'down';
     snake = [ {x: 1, y: 3} ];
     do {
             food = {
@@ -188,47 +213,43 @@ function restartGame() {
     clearInterval(intervalId);
     clearInterval(timeIntervalId);
 
-    intervalId = setInterval(render, 300);
+    intervalId = setInterval(render, GAME_SPEED_MS);
     timeIntervalId = setInterval(updateTime, 1000);
 }
 
 window.addEventListener("keydown", (event) => {
-    if (event.key == "ArrowUp" && direction !== "down") {
-        direction = "up";
-    } else if (event.key == "ArrowDown" && direction !== "up") {
-        direction = "down";
-    } else if (event.key == "ArrowLeft" && direction !== "right") {
-        direction = "left";
-    } else if (event.key == "ArrowRight" && direction !== "left") {
-        direction = "right";
+    const arrowKeys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
+    if (!arrowKeys.includes(event.key)) {
+        return;
+    }
+
+    // Stop the page from scrolling when steering with arrow keys.
+    event.preventDefault();
+
+    if (event.key === "ArrowUp") {
+        requestDirection("up");
+    } else if (event.key === "ArrowDown") {
+        requestDirection("down");
+    } else if (event.key === "ArrowLeft") {
+        requestDirection("left");
+    } else if (event.key === "ArrowRight") {
+        requestDirection("right");
     }
 })
 
 // --- Mobile support ---
-
-// Shared handler used by both the on-screen D-pad and swipe gestures,
-// mirroring the same "no reversing into yourself" rule as the keyboard handler.
-function setDirection(newDirection) {
-    if (newDirection === "up" && direction !== "down") {
-        direction = "up";
-    } else if (newDirection === "down" && direction !== "up") {
-        direction = "down";
-    } else if (newDirection === "left" && direction !== "right") {
-        direction = "left";
-    } else if (newDirection === "right" && direction !== "left") {
-        direction = "right";
-    }
-}
+// Touch input (D-pad + swipe) shares the same requestDirection() queue used
+// by the keyboard handler above, so both input methods are race-free.
 
 // On-screen D-pad buttons (shown on touch devices / small screens via CSS)
 document.querySelectorAll(".touch-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-        setDirection(btn.dataset.dir);
+        requestDirection(btn.dataset.dir);
     });
     // touchstart fires faster than click and avoids the ~300ms tap delay
     btn.addEventListener("touchstart", (event) => {
         event.preventDefault();
-        setDirection(btn.dataset.dir);
+        requestDirection(btn.dataset.dir);
     }, { passive: false });
 });
 
@@ -258,8 +279,8 @@ board.addEventListener("touchend", (event) => {
     }
 
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        setDirection(deltaX > 0 ? "right" : "left");
+        requestDirection(deltaX > 0 ? "right" : "left");
     } else {
-        setDirection(deltaY > 0 ? "down" : "up");
+        requestDirection(deltaY > 0 ? "down" : "up");
     }
 });
