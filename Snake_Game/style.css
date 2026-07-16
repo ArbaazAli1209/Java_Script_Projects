@@ -124,3 +124,51 @@ section .infos{
 .modal .game-over {
     display: none;
 }
+
+.mobile-controls{
+    display: none;
+    margin-top: 20px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.middle-controls{
+    display: flex;
+    gap: 12px;
+}
+
+.mobile-controls button{
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    font-weight: bold;
+    background: #333;
+    color: white;
+    cursor: pointer;
+}
+
+.mobile-controls button:active{
+    transform: scale(0.95);
+    background: #555;
+}
+
+@media (max-width:768px){
+
+    section{
+        padding:20px;
+    }
+
+    .board{
+        aspect-ratio:1;
+        width:100%;
+        flex-grow:0;
+    }
+
+    .mobile-controls{
+        display:flex;
+    }
+}

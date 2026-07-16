@@ -5,6 +5,11 @@ const startGameModal = document.querySelector(".start-game");
 const gameOverModal = document.querySelector(".game-over");
 const restartButton = document.querySelector(".btn-restart");
 
+const upBtn = document.querySelector("#up-btn");
+const downBtn = document.querySelector("#down-btn");
+const leftBtn = document.querySelector("#left-btn");
+const rightBtn = document.querySelector("#right-btn");
+
 const highScoreElement = document.querySelector("#high-score");
 const scoreElement = document.querySelector("#score");
 const timeElement = document.querySelector("#time");
@@ -181,13 +186,44 @@ function restartGame() {
 }
 
 window.addEventListener("keydown", (event) => {
-    if (event.key == "ArrowUp" && direction !== "down") {
+
+    if(event.key === "ArrowUp"){
+        changeDirection("up");
+    }
+    else if(event.key === "ArrowDown"){
+        changeDirection("down");
+    }
+    else if(event.key === "ArrowLeft"){
+        changeDirection("left");
+    }
+    else if(event.key === "ArrowRight"){
+        changeDirection("right");
+    }
+});
+
+function changeDirection(newDirection){
+
+    if(newDirection === "up" && direction !== "down"){
         direction = "up";
-    } else if (event.key == "ArrowDown" && direction !== "up") {
+    }
+
+    else if(newDirection === "down" && direction !== "up"){
         direction = "down";
-    } else if (event.key == "ArrowLeft" && direction !== "right") {
+    }
+
+    else if(newDirection === "left" && direction !== "right"){
         direction = "left";
-    } else if (event.key == "ArrowRight" && direction !== "left") {
+    }
+
+    else if(newDirection === "right" && direction !== "left"){
         direction = "right";
     }
-})
+}
+
+upBtn.addEventListener("click", () => changeDirection("up"));
+
+downBtn.addEventListener("click", () => changeDirection("down"));
+
+leftBtn.addEventListener("click", () => changeDirection("left"));
+
+rightBtn.addEventListener("click", () => changeDirection("right"));
