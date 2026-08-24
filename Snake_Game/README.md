@@ -7,6 +7,7 @@ A classic **Snake Game** built using **HTML, CSS, and Vanilla JavaScript**. The 
 
 ```
 https://snake-game-neon-theta-39.vercel.app/
+
 ```
 
 ---
@@ -120,4 +121,5 @@ This project is licensed under the MIT License.
 Developed as part of my JavaScript learning journey.
 
 Feel free to connect or explore more of my projects on GitHub!
+
 ````
